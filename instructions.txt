@@ -1,0 +1,85 @@
+download arduino-cli
+add arduino-cli to the PATH environment variable
+
+Step-by-Step Guide: Safe Inspection of Arduino Setup on Production PC
+
+Purpose: Ensure you can verify the current Arduino IDE setup, installed cores, and board information before making any changes. This guide is read-only and will not modify your current setup.
+
+---
+
+## 1. Inspect Installed Cores via Arduino IDE
+
+1. Open the **Arduino IDE**.
+2. Go to **Tools → Board → Boards Manager**.
+3. In the Boards Manager window, scroll or search for **Arduino AVR Boards**.
+
+   * Note the **version number** listed. This is the installed core for AVR boards (e.g., Uno, Mega).
+4. Optionally, check for any other installed cores your production environment uses.
+
+## 2. Identify the Current Board in Use
+
+1. In Arduino IDE, go to **Tools → Board → Board**.
+
+   * Note the exact board selected (e.g., Arduino Uno, Arduino Mega 2560).
+   * This tells you the **Fully Qualified Board Name (FQBN)** for CLI usage.
+2. Go to **Tools → Port** and note the COM port assigned to the board.
+
+## 3. Verify Core Installation via Arduino CLI (Optional, Read-Only)
+
+*Note: Only do this if `arduino-cli` is installed. Running these commands will not change anything.*
+
+1. Open a **PowerShell** window.
+2. List installed cores:
+
+```powershell
+arduino-cli core list
+```
+
+Example output:
+
+```
+arduino:avr 1.8.6 installed
+arduino:samd 1.8.13 installed
+```
+
+* `installed` means the core is present.
+* No changes are made to your system.
+
+## 4. Confirm Board Detection via CLI (Optional)
+
+```powershell
+arduino-cli board list
+```
+
+* Lists connected boards and the assigned port.
+* Matches what the IDE shows under **Tools → Port**.
+
+## 5. Notes on Safe CLI Commands
+
+| Command                           | Effect                                   | Safety                                           |
+| --------------------------------- | ---------------------------------------- | ------------------------------------------------ |
+| `arduino-cli core update-index`   | Refreshes metadata about available cores | ✅ Safe, read-only, does not touch existing cores |
+| `arduino-cli core install <core>` | Installs or updates a core               | ⚠️ Will modify your system                       |
+| `arduino-cli core upgrade <core>` | Upgrades an existing core                | ⚠️ Will modify your system                       |
+
+### Recommendation:
+
+* On a production PC, **run only inspection commands** (`core list` and `board list`) to document the setup.
+* Avoid running install or upgrade commands unless you are ready to make changes.
+
+---
+
+## 6. Document Your Findings
+
+Create a record for recovery purposes:
+
+* Arduino IDE version
+* Installed cores and versions
+* Selected board and port
+* Any other libraries in use
+
+Keep this document safe. If changes are made later, you can restore the exact setup.
+
+---
+
+End of Guide
