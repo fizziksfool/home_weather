@@ -61,7 +61,6 @@ void setup()
 
 void loop()
 {
-  delay(30000);
   Serial.println(F("Loop"));
 
   DateTime now = rtc.now();
@@ -111,4 +110,5 @@ void loop()
   {
     Serial.println(F("W fail"));
   }
+  delay(300000);
 }
