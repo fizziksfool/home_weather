@@ -15,7 +15,7 @@ def plot_csv_timeseries(file_path: str) -> None:
     variables = ["Temperature", "Pressure", "Humidity", "Gas"]
 
     # Create subplots (4 rows, 1 column)
-    fig, axes = plt.subplots(len(variables), 1, figsize=(10, 8), sharex=True, dpi=150)
+    fig, axes = plt.subplots(len(variables), 1, figsize=(10, 8), sharex=True, dpi=120)
 
     for ax, col in zip(axes, variables):
         if col in df.columns:
