@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-def plot_csv_timeseries(file_path: str) -> None:
+def plot_csv_timeseries(file_path: str, gap_threshold="5m2s") -> None:
     # Load CSV
     df = pd.read_csv(file_path)
 
@@ -12,21 +12,27 @@ def plot_csv_timeseries(file_path: str) -> None:
     except Exception:
         pass  # leave as-is if not datetime
 
+    # Calculate time differences
+    time_diffs = df["Time"].diff()
+    gap_mask = time_diffs > pd.Timedelta(gap_threshold)
+
+    # Assign a "segment id" that increments every time there's a gap
+    df["segment"] = gap_mask.cumsum()
+
     variables = ["Temperature", "Pressure", "Humidity", "Gas"]
 
     # Create subplots (4 rows, 1 column)
     fig, axes = plt.subplots(len(variables), 1, figsize=(10, 8), sharex=True, dpi=120)
 
     for ax, col in zip(axes, variables):
-        if col in df.columns:
-            ax.plot(df["Time"], df[col], label=col)
-            ax.set_ylabel(col)
-            ax.grid(True)
+        for _, seg in df.groupby("segment"):
+            ax.plot(seg["Time"], seg[col], label=col)
+        ax.set_ylabel(col)
+        ax.grid(True)
 
-    axes[-1].set_xlabel("Time")  # only label x-axis on bottom plot
+    axes[-1].set_xlabel("Time")
     fig.suptitle("Environmental Data Over Time", fontsize=14)
-
-    plt.tight_layout(rect=(0, 0, 1, 0.96))  # adjust layout to fit title
+    plt.tight_layout(rect=(0, 0, 1, 0.96))
     plt.show()
 
 
@@ -53,21 +59,9 @@ def append_csv(file_a: str, file_b: str | None = None) -> None:
     combined.to_csv(file_a, index=False)
 
 
-# def plot() -> None:
-#     df = pd.read_csv(".\\data\\home_weather.csv")
-
-#     df["Time"] = pd.to_datetime(df["Time"].astype(str))
-
-#     df.plot(x="Time", y="Temperature", title="Temperature")
-#     df.plot(x="Time", y="Pressure", title="Pressure")
-#     df.plot(x="Time", y="Humidity", title="Humidity")
-#     df.plot(x="Time", y="Gas", title="Gas")
-#     plt.show()
-
-
 append_csv(
     ".\\data\\home_weather.csv",
-    # ".\\data\\TEST.CSV",
+    #  ".\\data\\TEST.CSV",
 )
 
 plot_csv_timeseries(".\\data\\home_weather.csv")
