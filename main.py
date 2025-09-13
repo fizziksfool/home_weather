@@ -26,7 +26,7 @@ def plot_csv_timeseries(file_path: str, gap_threshold="5m2s") -> None:
 
     for ax, col in zip(axes, variables):
         for _, seg in df.groupby("segment"):
-            ax.plot(seg["Time"], seg[col], label=col)
+            ax.plot(seg["Time"], seg[col], label=col, color="tab:blue")
         ax.set_ylabel(col)
         ax.grid(True)
 
