@@ -4,10 +4,15 @@
 #include "Adafruit_BME680.h"
 #include <SD.h>
 #include "RTClib.h"
+#include <EEPROM.h>
 
 RTC_PCF8523 rtc;
 File myFile;
 
+// --- Build signature to detect new uploads ---
+const char buildSignature[] = __DATE__ __TIME__;
+
+// BME680 SPI pin definitions
 #define BME_SCK 13
 #define BME_MISO 12
 #define BME_MOSI 11
@@ -20,38 +25,51 @@ void setup()
   Serial.begin(9600);
   Serial.println(F("Start"));
 
-  // RTC init
+  // --- RTC init ---
   if (!rtc.begin())
   {
     Serial.println(F("No RTC"));
-    while (1)
-      ;
-  }
-  if (!rtc.initialized())
-  {
-    Serial.println(F("RTC adj"));
-    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    while (1);
   }
 
-  // SD init
+  // --- Detect new upload via EEPROM signature ---
+  bool needsAdjust = false;
+  char savedSignature[sizeof(buildSignature)];
+
+  for (unsigned int i = 0; i < sizeof(buildSignature); i++)
+    savedSignature[i] = EEPROM.read(i);
+
+  if (memcmp(savedSignature, buildSignature, sizeof(buildSignature)) != 0)
+  {
+    needsAdjust = true;
+    Serial.println(F("New build detected – syncing RTC"));
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+
+    for (unsigned int i = 0; i < sizeof(buildSignature); i++)
+      EEPROM.write(i, buildSignature[i]);
+  }
+  else
+  {
+    Serial.println(F("Same build – keeping RTC time"));
+  }
+
+  // --- SD init ---
   if (!SD.begin(10))
   {
     Serial.println(F("SD fail"));
-    while (1)
-      ;
+    while (1);
   }
   Serial.println(F("SD ok"));
 
-  // BME init
+  // --- BME680 init ---
   if (!bme.begin())
   {
     Serial.println(F("No BME680"));
-    while (1)
-      ;
+    while (1);
   }
   Serial.println(F("BME ok"));
 
-  // Configure BME
+  // --- BME configuration ---
   bme.setTemperatureOversampling(BME680_OS_8X);
   bme.setHumidityOversampling(BME680_OS_2X);
   bme.setPressureOversampling(BME680_OS_4X);
@@ -65,6 +83,7 @@ void loop()
 
   DateTime now = rtc.now();
 
+  // Create CSV file with header if not already present
   if (!SD.exists("test.csv"))
   {
     myFile = SD.open("test.csv", FILE_WRITE);
@@ -80,17 +99,20 @@ void loop()
     }
   }
 
+  // Perform BME680 reading
   if (!bme.performReading())
   {
     Serial.println(F("BME fail"));
     return;
   }
 
+  // Format timestamp
   char ts[20];
   snprintf(ts, sizeof(ts), "%04d-%02d-%02d %02d:%02d:%02d",
            now.year(), now.month(), now.day(),
            now.hour(), now.minute(), now.second());
 
+  // Write data to SD
   myFile = SD.open("test.csv", FILE_WRITE);
   if (myFile)
   {
@@ -110,5 +132,6 @@ void loop()
   {
     Serial.println(F("W fail"));
   }
-  delay(300000);
+
+  delay(1000);
 }
