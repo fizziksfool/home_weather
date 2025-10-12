@@ -6,7 +6,7 @@ ino_folder = Path(
     r"C:\Users\erbej\Desktop\Python Projects\home_weather\BME680_dataLogger"
 )  # Folder containing your .ino file
 board_fqbn = "arduino:avr:uno"  # Uno FQBN
-port = "COM3"  # Replace with the port your Uno is on
+port = "COM4"  # Replace with the port your Uno is on
 
 
 # --- FUNCTION TO FIND MAIN .ino FILE ---
