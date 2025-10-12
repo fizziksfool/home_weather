@@ -9,10 +9,15 @@
 RTC_PCF8523 rtc;
 File myFile;
 
-// --- Build signature to detect new uploads ---
+// --- Build signature for detecting new uploads ---
 const char buildSignature[] = __DATE__ __TIME__;
 
-// BME680 SPI pin definitions
+// EEPROM constants
+const int EEPROM_MAGIC_ADDR = 0; // start address
+const byte EEPROM_MAGIC_VALUE = 0xA5; // used to check initialization
+const int EEPROM_SIG_ADDR = 1;  // where the signature starts
+
+// BME680 SPI pins
 #define BME_SCK 13
 #define BME_MISO 12
 #define BME_MOSI 11
@@ -32,25 +37,42 @@ void setup()
     while (1);
   }
 
-  // --- Detect new upload via EEPROM signature ---
+  // --- EEPROM signature check ---
   bool needsAdjust = false;
+
+  // Check if EEPROM has been initialized before
+  byte magic = EEPROM.read(EEPROM_MAGIC_ADDR);
   char savedSignature[sizeof(buildSignature)];
 
-  for (unsigned int i = 0; i < sizeof(buildSignature); i++)
-    savedSignature[i] = EEPROM.read(i);
-
-  if (memcmp(savedSignature, buildSignature, sizeof(buildSignature)) != 0)
+  if (magic != EEPROM_MAGIC_VALUE)
   {
+    Serial.println(F("EEPROM uninitialized – syncing RTC"));
     needsAdjust = true;
-    Serial.println(F("New build detected – syncing RTC"));
-    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-
-    for (unsigned int i = 0; i < sizeof(buildSignature); i++)
-      EEPROM.write(i, buildSignature[i]);
   }
   else
   {
-    Serial.println(F("Same build – keeping RTC time"));
+    for (unsigned int i = 0; i < sizeof(buildSignature); i++)
+      savedSignature[i] = EEPROM.read(EEPROM_SIG_ADDR + i);
+
+    if (memcmp(savedSignature, buildSignature, sizeof(buildSignature)) != 0)
+    {
+      Serial.println(F("New build detected – syncing RTC"));
+      needsAdjust = true;
+    }
+    else
+    {
+      Serial.println(F("Same build – keeping RTC time"));
+    }
+  }
+
+  // --- Adjust RTC if needed ---
+  if (needsAdjust)
+  {
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+
+    EEPROM.write(EEPROM_MAGIC_ADDR, EEPROM_MAGIC_VALUE);
+    for (unsigned int i = 0; i < sizeof(buildSignature); i++)
+      EEPROM.write(EEPROM_SIG_ADDR + i, buildSignature[i]);
   }
 
   // --- SD init ---
@@ -75,6 +97,21 @@ void setup()
   bme.setPressureOversampling(BME680_OS_4X);
   bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
   bme.setGasHeater(320, 150);
+
+  // Print current RTC time for verification
+  DateTime now = rtc.now();
+  Serial.print(F("RTC time: "));
+  Serial.print(now.year());
+  Serial.print("-");
+  Serial.print(now.month());
+  Serial.print("-");
+  Serial.print(now.day());
+  Serial.print(" ");
+  Serial.print(now.hour());
+  Serial.print(":");
+  Serial.print(now.minute());
+  Serial.print(":");
+  Serial.println(now.second());
 }
 
 void loop()
@@ -133,5 +170,5 @@ void loop()
     Serial.println(F("W fail"));
   }
 
-  delay(1000);
+  delay(300000);
 }
