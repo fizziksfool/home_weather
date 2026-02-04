@@ -120,5 +120,5 @@ void loop()
   {
     Serial.println(F("W fail"));
   }
-  delay(30000);
+  delay(300000);
 }
