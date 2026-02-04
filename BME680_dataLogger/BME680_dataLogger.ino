@@ -4,20 +4,10 @@
 #include "Adafruit_BME680.h"
 #include <SD.h>
 #include "RTClib.h"
-#include <EEPROM.h>
 
 RTC_PCF8523 rtc;
 File myFile;
 
-// --- Build signature for detecting new uploads ---
-const char buildSignature[] = __DATE__ __TIME__;
-
-// EEPROM constants
-const int EEPROM_MAGIC_ADDR = 0; // start address
-const byte EEPROM_MAGIC_VALUE = 0xA5; // used to check initialization
-const int EEPROM_SIG_ADDR = 1;  // where the signature starts
-
-// BME680 SPI pins
 #define BME_SCK 13
 #define BME_MISO 12
 #define BME_MOSI 11
@@ -30,68 +20,54 @@ void setup()
   Serial.begin(9600);
   Serial.println(F("Start"));
 
-  // --- RTC init ---
+  // RTC init
   if (!rtc.begin())
   {
     Serial.println(F("No RTC"));
-    while (1);
+    while (1)
+      ;
   }
 
-  // --- EEPROM signature check ---
+  // --- Detect new upload via EEPROM signature ---
   bool needsAdjust = false;
-
-  // Check if EEPROM has been initialized before
-  byte magic = EEPROM.read(EEPROM_MAGIC_ADDR);
   char savedSignature[sizeof(buildSignature)];
 
-  if (magic != EEPROM_MAGIC_VALUE)
+  for (unsigned int i = 0; i < sizeof(buildSignature); i++)
+    savedSignature[i] = EEPROM.read(i);
+
+  if (memcmp(savedSignature, buildSignature, sizeof(buildSignature)) != 0)
   {
-    Serial.println(F("EEPROM uninitialized – syncing RTC"));
     needsAdjust = true;
+    Serial.println(F("New build detected – syncing RTC"));
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+
+    for (unsigned int i = 0; i < sizeof(buildSignature); i++)
+      EEPROM.write(i, buildSignature[i]);
   }
   else
   {
-    for (unsigned int i = 0; i < sizeof(buildSignature); i++)
-      savedSignature[i] = EEPROM.read(EEPROM_SIG_ADDR + i);
-
-    if (memcmp(savedSignature, buildSignature, sizeof(buildSignature)) != 0)
-    {
-      Serial.println(F("New build detected – syncing RTC"));
-      needsAdjust = true;
-    }
-    else
-    {
-      Serial.println(F("Same build – keeping RTC time"));
-    }
+    Serial.println(F("Same build – keeping RTC time"));
   }
 
-  // --- Adjust RTC if needed ---
-  if (needsAdjust)
-  {
-    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-
-    EEPROM.write(EEPROM_MAGIC_ADDR, EEPROM_MAGIC_VALUE);
-    for (unsigned int i = 0; i < sizeof(buildSignature); i++)
-      EEPROM.write(EEPROM_SIG_ADDR + i, buildSignature[i]);
-  }
-
-  // --- SD init ---
+  // SD init
   if (!SD.begin(10))
   {
     Serial.println(F("SD fail"));
-    while (1);
+    while (1)
+      ;
   }
   Serial.println(F("SD ok"));
 
-  // --- BME680 init ---
+  // BME init
   if (!bme.begin())
   {
     Serial.println(F("No BME680"));
-    while (1);
+    while (1)
+      ;
   }
   Serial.println(F("BME ok"));
 
-  // --- BME configuration ---
+  // Configure BME
   bme.setTemperatureOversampling(BME680_OS_8X);
   bme.setHumidityOversampling(BME680_OS_2X);
   bme.setPressureOversampling(BME680_OS_4X);
@@ -120,7 +96,6 @@ void loop()
 
   DateTime now = rtc.now();
 
-  // Create CSV file with header if not already present
   if (!SD.exists("test.csv"))
   {
     myFile = SD.open("test.csv", FILE_WRITE);
@@ -136,20 +111,17 @@ void loop()
     }
   }
 
-  // Perform BME680 reading
   if (!bme.performReading())
   {
     Serial.println(F("BME fail"));
     return;
   }
 
-  // Format timestamp
   char ts[20];
   snprintf(ts, sizeof(ts), "%04d-%02d-%02d %02d:%02d:%02d",
            now.year(), now.month(), now.day(),
            now.hour(), now.minute(), now.second());
 
-  // Write data to SD
   myFile = SD.open("test.csv", FILE_WRITE);
   if (myFile)
   {
@@ -169,6 +141,5 @@ void loop()
   {
     Serial.println(F("W fail"));
   }
-
   delay(300000);
 }
