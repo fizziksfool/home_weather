@@ -61,7 +61,7 @@ def append_csv(file_a: str, file_b: str | None = None) -> None:
 
 append_csv(
     ".\\data\\home_weather.csv",
-    #  ".\\data\\TEST.CSV",
+    # ".\\data\\TEST.CSV",
 )
 
 plot_csv_timeseries(".\\data\\home_weather.csv")
