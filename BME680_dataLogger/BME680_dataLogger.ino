@@ -28,27 +28,6 @@ void setup()
       ;
   }
 
-  // --- Detect new upload via EEPROM signature ---
-  bool needsAdjust = false;
-  char savedSignature[sizeof(buildSignature)];
-
-  for (unsigned int i = 0; i < sizeof(buildSignature); i++)
-    savedSignature[i] = EEPROM.read(i);
-
-  if (memcmp(savedSignature, buildSignature, sizeof(buildSignature)) != 0)
-  {
-    needsAdjust = true;
-    Serial.println(F("New build detected – syncing RTC"));
-    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-
-    for (unsigned int i = 0; i < sizeof(buildSignature); i++)
-      EEPROM.write(i, buildSignature[i]);
-  }
-  else
-  {
-    Serial.println(F("Same build – keeping RTC time"));
-  }
-
   // SD init
   if (!SD.begin(10))
   {
@@ -141,5 +120,5 @@ void loop()
   {
     Serial.println(F("W fail"));
   }
-  delay(300000);
+  delay(30000);
 }
