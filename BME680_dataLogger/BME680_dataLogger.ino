@@ -17,6 +17,7 @@ Adafruit_BME680 bme(BME_CS); // hardware SPI
 
 void setup()
 {
+  delay(5000);
   Serial.begin(9600);
   Serial.println(F("Start"));
 
