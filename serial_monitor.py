@@ -13,15 +13,15 @@ def run_monitor_no_reset(port="COM3", baud=9600) -> None:
 
     try:
         ser.open()
-        print(f"--- Connected to {port} ---")
-        print("--- ctrl+C to exit ---")
+        print(f"--- Monitoring {port} ---")
+        print("--- Press ctrl+C to exit ---\n")
         while True:
             if ser.in_waiting > 0:
                 line = ser.readline().decode("utf-8", errors="ignore")
                 print(line, end="")
     except KeyboardInterrupt:
         ser.close()
-        print("--- Disconnected ---")
+        print("\n--- Disconnected ---")
 
 
 run_monitor_no_reset()
