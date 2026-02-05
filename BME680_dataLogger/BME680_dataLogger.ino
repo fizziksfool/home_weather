@@ -72,8 +72,6 @@ void setup()
 
 void loop()
 {
-  Serial.println(F("Loop"));
-
   DateTime now = rtc.now();
 
   if (!SD.exists("test.csv"))
