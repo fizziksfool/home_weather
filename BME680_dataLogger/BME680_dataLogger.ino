@@ -95,12 +95,24 @@ void loop()
     return;
   }
 
-  char ts[20];
+  myFile = SD.open("test.csv", FILE_WRITE);
+
+  if (!myFile)
+  {
+    Serial.println(F("Write fail - Card removed? Retrying init..."));
+
+    // Attempt to re-initialize the card
+    if (SD.begin(10))
+    {
+      myFile = SD.open("test.csv", FILE_WRITE); // Try opening again
+    }
+  }
+
+  char ts[24];
   snprintf(ts, sizeof(ts), "%04d-%02d-%02d %02d:%02d:%02d",
            now.year(), now.month(), now.day(),
            now.hour(), now.minute(), now.second());
 
-  myFile = SD.open("test.csv", FILE_WRITE);
   if (myFile)
   {
     myFile.print(ts);
@@ -113,11 +125,21 @@ void loop()
     myFile.print(",");
     myFile.println(bme.gas_resistance / 1000.0);
     myFile.close();
-    Serial.println(F("W ok"));
+
+    Serial.print(ts);
+    Serial.print(",");
+    Serial.print(bme.temperature);
+    Serial.print(",");
+    Serial.print(bme.pressure / 100.0);
+    Serial.print(",");
+    Serial.print(bme.humidity);
+    Serial.print(",");
+    Serial.println(bme.gas_resistance / 1000.0);
   }
   else
   {
     Serial.println(F("W fail"));
   }
+
   delay(300000);
 }
