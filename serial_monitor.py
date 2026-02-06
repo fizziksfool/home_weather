@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import serial
 
 
@@ -14,7 +16,11 @@ def run_monitor_no_reset(port="COM3", baud=9600) -> None:
     try:
         ser.open()
         print(f"--- Monitoring {port} ---")
-        print("--- Press ctrl+C to exit ---\n")
+        print("--- Press ctrl+C to exit ---")
+        time = datetime.now()
+        time = time.strftime("%Y-%m-%d %H:%M:%S")
+        print(f"Monitoring started at {time}\n")
+
         while True:
             if ser.in_waiting > 0:
                 line = ser.readline().decode("utf-8", errors="ignore")
