@@ -29,6 +29,10 @@ void setup()
       ;
   }
 
+  // Uncomment these two lines if the RTC datetime is out of sync
+  // rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  // Serial.println(F("--- RTC RECALIBRATED ---"));
+
   // SD init
   if (!SD.begin(10))
   {
