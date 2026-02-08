@@ -20,14 +20,15 @@ def plot_csv_timeseries(file_path: str, gap_threshold="5m2s") -> None:
     df["segment"] = gap_mask.cumsum()
 
     variables = ["Temperature", "Pressure", "Humidity", "Gas"]
+    units = ["°C", "mbar", "%RH", "Ω"]
 
     # Create subplots (4 rows, 1 column)
     fig, axes = plt.subplots(len(variables), 1, figsize=(10, 8), sharex=True, dpi=120)
 
-    for ax, col in zip(axes, variables):
+    for ax, col, unit in zip(axes, variables, units):
         for _, seg in df.groupby("segment"):
             ax.plot(seg["Time"], seg[col], label=col, color="tab:blue")
-        ax.set_ylabel(col)
+        ax.set_ylabel(f"{col} ({unit})")
         ax.grid(True)
 
     axes[-1].set_xlabel("Time")
