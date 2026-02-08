@@ -16,11 +16,14 @@ def plot_csv_timeseries(file_path: str, gap_threshold="5m2s") -> None:
     time_diffs = df["Time"].diff()
     gap_mask = time_diffs > pd.Timedelta(gap_threshold)
 
+    # Convert °C to °F
+    df["Temperature"] = round((df["Temperature"] * 9 / 5) + 32, 2)
+
     # Assign a "segment id" that increments every time there's a gap
     df["segment"] = gap_mask.cumsum()
 
     variables = ["Temperature", "Pressure", "Humidity", "Gas"]
-    units = ["°C", "mbar", "%RH", "Ω"]
+    units = ["°F", "mbar", "%RH", "Ω"]
 
     # Create subplots (4 rows, 1 column)
     fig, axes = plt.subplots(len(variables), 1, figsize=(10, 8), sharex=True, dpi=120)
